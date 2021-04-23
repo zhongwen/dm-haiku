@@ -14,12 +14,14 @@
 # ==============================================================================
 """IMPALA actor class."""
 import dm_env
+import jax
+import launchpad as lp
+import numpy as np
+
 import haiku as hk
 from examples.impala import agent as agent_lib
 from examples.impala import learner as learner_lib
 from examples.impala import util
-import jax
-import numpy as np
 
 
 class Actor:
@@ -30,14 +32,14 @@ class Actor:
       agent: agent_lib.Agent,
       env: dm_env.Environment,
       unroll_length: int,
-      learner: learner_lib.Learner,
+      learner:  lp.CourierClient,    # learner_lib.Learner,
       rng_seed: int = 42,
       logger=None,
   ):
     self._agent = agent
     self._env = env
     self._unroll_length = unroll_length
-    self._learner = learner
+    self._learner = learner  # type: learner_lib.Learner
     self._timestep = env.reset()
     self._agent_state = agent.initial_state(None)
     self._traj = []
@@ -104,3 +106,10 @@ class Actor:
 
   def pull_params(self):
     return self._learner.params_for_actor()
+
+  def run(self):
+    """Runs an actor to produce num_trajectories trajectories."""
+    while True:
+      frame_count, params = self.pull_params()
+      print(frame_count)
+      self.unroll_and_push(frame_count, params)

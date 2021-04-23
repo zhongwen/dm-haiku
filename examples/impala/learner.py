@@ -186,7 +186,7 @@ class Learner:
       # Clean out the built-up batch.
       batch = []
 
-  def run(self, max_iterations: int = -1):
+  def run(self):
     """Runs the learner for max_iterations updates."""
     # Start host-to-device transfer worker.
     transfer_thread = threading.Thread(target=self.host_to_device_worker)
@@ -195,7 +195,7 @@ class Learner:
     (num_frames, params) = self._params_for_actor
     opt_state = self._opt.init(params)
 
-    steps = range(max_iterations) if max_iterations != -1 else itertools.count()
+    steps = itertools.count()
     for _ in steps:
       batch = self._device_q.get()
       params, opt_state, logs = self.update(params, opt_state, batch)
@@ -209,6 +209,7 @@ class Learner:
       logs.update({
           'num_frames': num_frames,
       })
+      print(num_frames)
       self._logger.write(logs)
 
     # Shut down.
